@@ -5,7 +5,7 @@ import sys
 sys.path.append("/credentials")
 import credentials as cred
 import argparse
-
+from tqdm import tqdm
 
 # parse comandline arguments
 parser = argparse.ArgumentParser(description='Search configurations')
@@ -46,7 +46,7 @@ def sub_exists(sub):
 
 # check if subreddit exists
 if (args.subreddit == None):
-    print("No subreddit defined\n") 
+    print("No subreddit defined\n")
     sys.exit()
 
 sub_list = args.subreddit.split('+')
@@ -81,15 +81,14 @@ print(posts)
 # crawl post comments
 print("Now showing %d posts being processed:" % len(posts.index))
 result = posts
-for id in posts["id"]:
+for id in tqdm(posts["id"]):
     comments = []
     submission = reddit.submission(id=id)
-    print(posts.loc[posts['id'] == id]['title'].item())
     submission.comments.replace_more(limit=None)
     for comment in submission.comments.list():
-        comments.append([None, "comment", comment.author, comment.score, comment.id, comment.subreddit, None, None, comment.body, comment.created])
+        comments.append([None, "comment", comment.author, comment.score, id, comment.subreddit, None, None, comment.body, comment.created])
     comments = pd.DataFrame(comments,columns=['title', 'type', 'author', 'score', 'id', 'subreddit', 'url', 'num_comments', 'body', 'created'])
-    result = result.append(comments).reset_index(drop=True)
+    result = pd.concat([result, comments]).reset_index(drop=True)
 print(result)
 
 
